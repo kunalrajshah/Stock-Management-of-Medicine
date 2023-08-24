@@ -1,17 +1,18 @@
-import React, { useRef, useState, useContext } from "react";
+import React, { useRef, useState, useContext, useEffect } from "react";
 import CartContext from "./store/cartContext";
 import Output from "./Output";
 import CartModal from "./Cart/CartModal";
+import axios from "axios";
 
 const InputForm = () => {
   const ctxt = useContext(CartContext);
   const [userInput, setInput] = useState([]);
-  const[displayCart,setDisplay]=useState(false);
+  const [displayCart, setDisplay] = useState(false);
   const medicineNameRef = useRef();
   const descriptionRef = useRef();
   const priceRef = useRef();
 
-  const handleAddProduct = (event) => {
+  const handleAddProduct = async (event) => {
     event.preventDefault();
     const medicineName = medicineNameRef.current.value;
     const description = descriptionRef.current.value;
@@ -22,21 +23,39 @@ const InputForm = () => {
       desc: description,
       price: price,
     };
-    setInput([...userInput,MedDetails]);
+    setInput([...userInput, MedDetails]);
 
+    // Save data in crudcrud
+    try {
+      const Response = await axios.post(
+        "https://crudcrud.com/api/bee828ad00b843f29c10a9afc13ebfe1/products",
+        MedDetails
+      );
+      // console.log(Response.data);
+    } catch (err) {
+      console.log("something err", err);
+    }
     // Clear the form fields
-    medicineNameRef.current.value = '';
-    descriptionRef.current.value = '';
-    priceRef.current.value = '';
+    medicineNameRef.current.value = "";
+    descriptionRef.current.value = "";
+    priceRef.current.value = "";
   };
 
-  const CartHandler=()=>{
-    setDisplay(true);
-  }
+  // Get Data From CrudCrud
+  useEffect(() => {
+    axios
+      .get("https://crudcrud.com/api/bee828ad00b843f29c10a9afc13ebfe1/products")
+      .then((response) => {
+        setInput(response.data);
+      })
+      .catch((error) => {
+        console.log("Error fetching data from API:", error);
+      });
+  }, []);
 
-  // useEffect(() => {
-  //   console.log(userInput);
-  // }, [userInput]);
+  const CartHandler = () => {
+    setDisplay(true);
+  };
 
   return (
     <div className="p-4 ">
@@ -44,7 +63,10 @@ const InputForm = () => {
         <h2 className="text-xl font-semibold mb-4 text-center underline">
           Add Medicine Product
         </h2>
-        <button className="text-xl border-2 border-blue-600 p-2 rounded" onClick={CartHandler}>
+        <button
+          className="text-xl border-2 border-blue-600 p-2 rounded"
+          onClick={CartHandler}
+        >
           Cart <span className="text-red-500">{ctxt.item.length}</span>
         </button>
       </div>
@@ -86,7 +108,7 @@ const InputForm = () => {
           Add Product
         </button>
       </div>
-      <Output data={userInput}/>
+      <Output data={userInput} />
       {displayCart && <CartModal onclk={setDisplay} />}
     </div>
   );
